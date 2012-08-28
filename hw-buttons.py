@@ -20,7 +20,16 @@ class HWButtons:
 		# вычисляем ссылки на notepad содержащие кнопки
 		self.vbuttons = self.builder.get_object("vbuttons")
 		self.hbuttons = self.builder.get_object("hbuttons")
-		
+
+		# в этом массиве задаем номера страниц для пинов режимов работы.		
+		self.modes = {"mode-auto":0, "mode-manual":1, "mode-mdi":2, "mode-none":3,}		
+
+		# создаем пины для режимов
+		self.modetriggers = []
+		for mode in self.modes :
+			self.modetriggers.append(hal_glib.GPin(halcomp.newpin(mode, hal.HAL_BIT, hal.HAL_IN)))			
+			self.modetriggers[-1].connect("value-changed", self.change_mode)
+			
 		# в этих массивах буду тхранится ссылки на пины vbutton.XX и hbutton.XX 
 		self.vtriggers = []
 		self.htriggers = []
@@ -38,6 +47,28 @@ class HWButtons:
 			self.htriggers.append(hal_glib.GPin(halcomp.newpin('hbutton.%s'%i, hal.HAL_BIT, hal.HAL_IN)))
 			self.htriggers[-1].connect("value-changed",self.click_button, self.hbuttons, i)
 		
+		# Говорим, что компонент готов к работе
+#		self.comp.ready()
+
+	def change_mode(self, pin) :
+		print "1"
+		# changes active notebooks page
+		for mode in self.modes :
+			# проверяем все пины режимов
+			if self.comp[mode] == True :
+				self.mode = self.modes[mode]
+				self.update_mode()
+				return
+				
+		# если все пины режимов не активны ставим mode-none
+		self.mode = self.modes["mode-none"]
+		self.update_mode()
+	
+				
+	def update_mode(self) :
+		 self.vbuttons.set_current_page(self.mode)
+		 self.hbuttons.set_current_page(self.mode)
+
 		
 	def click_button(self, pin, notebook, num) :
 		# Функция нажать на кнопку

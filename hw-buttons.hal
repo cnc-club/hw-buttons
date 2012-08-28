@@ -1,0 +1,22 @@
+
+net auto	<=	halui.mode.is-auto		=>	hw-buttons.mode-auto
+net manual	<=	halui.mode.is-manual	=>	hw-buttons.mode-manual
+net mdi		<=	halui.mode.is-mdi		=>	hw-buttons.mode-mdi
+
+
+net hbutton0	=>	hw-buttons.hbutton.0
+net hbutton1	=>	hw-buttons.hbutton.1
+net hbutton2	=>	hw-buttons.hbutton.2
+net hbutton3	=>	hw-buttons.hbutton.3
+net hbutton4	=>	hw-buttons.hbutton.4
+net hbutton5	=>	hw-buttons.hbutton.5
+net hbutton6	=>	hw-buttons.hbutton.6
+
+net vbutton0	=>	hw-buttons.vbutton.0
+net vbutton1	=>	hw-buttons.vbutton.1
+net vbutton2	=>	hw-buttons.vbutton.2
+net vbutton3	=>	hw-buttons.vbutton.3
+net vbutton4	=>	hw-buttons.vbutton.4
+net vbutton5	=>	hw-buttons.vbutton.5
+net vbutton6	=>	hw-buttons.vbutton.6
+
