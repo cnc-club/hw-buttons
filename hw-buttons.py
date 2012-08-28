@@ -1,5 +1,5 @@
 #!/usr/bin/env python
- 
+  # -*- coding: utf-8 -*-
 # Задаем кол-во кнопок v - вертикальные, h - горизонтальные
 vbuttons_num = 7
 hbuttons_num = 7
