@@ -1,4 +1,4 @@
-#!/usr/bin/python2.4
+#!/usr/bin/python
 
 #    Gscreen a GUI for linuxcnc cnc controller 
 #    Chris Morley copyright 2012
@@ -69,7 +69,11 @@ gettext.install("linuxcnc", localedir=LOCALEDIR, unicode=True)
 gtk.glade.bindtextdomain("linuxcnc", LOCALEDIR)
 gtk.glade.textdomain("linuxcnc")
 TCLPATH = os.environ['LINUXCNC_TCL_DIR']
-CONFIGPATH = os.environ['CONFIG_DIR']
+
+CONFIGPATH = "/home/nick/emc2/configs/sim/axis/hw-buttons"
+
+#CONFIGPATH = os.environ['CONFIG_DIR']
+
 def set_active(w, s):
 	if not w: return
 	os = w.get_active()
@@ -86,9 +90,10 @@ def set_text(w, t):
 	if ot != t: w.set_label(t)
 
 import linuxcnc
-from gscreen import emc_interface
-from gscreen import mdi
-from gscreen import preferences
+import emc_interface
+import mdi
+import preferences
+import hwbuttons
 
 pix_data = '''/* XPM */
 static char * invisible_xpm[] = {
@@ -321,6 +326,7 @@ def load_handlers(usermod,halcomp,builder,useropts):
         except Exception, e:
             print "gladevcp: trouble looking for handlers in '%s': %s" %(basename, e)
             traceback.print_exc()
+        
 
     # Wrap lists in Trampoline, unwrap single functions
     for n,v in list(handlers.items()):
@@ -639,6 +645,14 @@ class Gscreen:
         self._dynamic_childs = {}
         atexit.register(self.kill_dynamic_childs)
         self.set_dynamic_tabs()
+        
+
+        self.hwbuttons = hwbuttons.HWButtons(self.halcomp,self.xml, "")	
+        self.hwbuttons.hmodes = {_MAN:0, _MDI: 1, _AUTO:2, 3:3,4:4,5:5, "mode-none":6}
+        self.hwbuttons.hmodes = {_MAN:0, _MDI: 1, _AUTO:2, 3:3,4:4,5:5, "mode-none":6}
+
+
+
 
         # and display everything
         self.widgets.window1.set_title("Gscreen for linuxcnc")
@@ -1234,14 +1248,11 @@ class Gscreen:
     def homing(self,*args):
         print "show/hide homing buttons"
         if self.widgets.button_homing.get_active():
-            for i in range(0,3):
-                self.widgets["mode%d"% i].hide()
-            self.widgets.mode3.show()
+            self.hwbuttons.update_mode(3)
             self.widgets.button_mode.set_sensitive(False)
             self.widgets.button_override.set_sensitive(False)
             self.widgets.button_graphics.set_sensitive(False)
         else:
-            self.widgets.mode3.hide()
             self.mode_changed(self.data.mode_order[0])
             self.widgets.button_mode.set_sensitive(True)
             self.widgets.button_override.set_sensitive(True)
@@ -1250,17 +1261,12 @@ class Gscreen:
     def graphics(self,*args):
         print "show/hide graphics buttons"
         if self.widgets.button_graphics.get_active():
-            for i in range(0,3):
-                self.widgets["mode%d"% i].hide()
-            self.widgets.mode5.show()
-            self.widgets.vmode0.show()
-            self.widgets.vmode1.hide()
+            self.hwbuttons.update_mode(5)
             self.widgets.dro_frame.set_sensitive(False)
             self.widgets.button_mode.set_sensitive(False)
             self.widgets.button_override.set_sensitive(False)
             self.widgets.button_homing.set_sensitive(False)
         else:
-            self.widgets.mode5.hide()
             self.mode_changed(self.data.mode_order[0])
             self.widgets.dro_frame.set_sensitive(True)
             self.widgets.button_mode.set_sensitive(True)
@@ -1270,17 +1276,12 @@ class Gscreen:
     def override(self,*args):
         print "show/hide override buttons"
         if self.widgets.button_override.get_active():
-            for i in range(0,3):
-                self.widgets["mode%d"% i].hide()
-            self.widgets.mode4.show()
-            self.widgets.vmode0.show()
-            self.widgets.vmode1.hide()
+            self.hwbuttons.update_mode(4)
             self.widgets.dro_frame.set_sensitive(False)
             self.widgets.button_mode.set_sensitive(False)
             self.widgets.button_graphics.set_sensitive(False)
             self.widgets.button_homing.set_sensitive(False)
         else:
-            self.widgets.mode4.hide()
             self.mode_changed(self.data.mode_order[0])
             self.widgets.dro_frame.set_sensitive(True)
             self.widgets.button_mode.set_sensitive(True)
@@ -1751,25 +1752,15 @@ class Gscreen:
         self.update_position()
 
     def mode_changed(self,mode):
-        for i in range(0,3):
-            if i == mode:
-                self.widgets["mode%d"% i].show()
-            else:
-                self.widgets["mode%d"% i].hide()
+        self.hwbuttons.update_mode(mode)
         if mode == _MAN: 
-            self.widgets.vmode0.show()
-            self.widgets.vmode1.hide()
             self.widgets.notebook_mode.hide()
             self.widgets.hal_mdihistory.hide()
             self.widgets.button_homing.show()
         elif mode == _MDI:
             self.widgets.hal_mdihistory.show()
-            self.widgets.vmode0.show()
-            self.widgets.vmode1.hide()
             self.widgets.notebook_mode.hide()
         elif mode == _AUTO:
-            self.widgets.vmode0.hide()
-            self.widgets.vmode1.show()
             if self.data.full_graphics:
                 self.widgets.notebook_mode.hide()
             else:
@@ -1815,8 +1806,8 @@ class Gscreen:
         for i in ("x","y","z","a","s"):
             if i == "s":
                 self.widgets.s_display.set_value(abs(self.halcomp["spindle-readout.in"]))
-                self.widgets.s_display.set_target_value(abs(self.data.spindle_speed))
-                self.widgets.s_display2.set_value(abs(self.data.spindle_speed))
+                self.widgets.s_display.set_value(abs(self.data.spindle_speed))
+#                self.widgets.s_display2.set_value(abs(self.data.spindle_speed))
             else:
                 
                 for j in range (0,3):
